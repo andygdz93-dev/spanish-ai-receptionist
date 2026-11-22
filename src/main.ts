@@ -33,7 +33,10 @@ export default defineAgent({
       // See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
       tts: new inference.TTS({
         model: 'fishaudio/s2.1-pro',
-        voice: 'fa4c9eb3dccc4806b382b40d61c6b10a',
+        voice: process.env.DENTAL_TTS_VOICE_ID || 'd4bd2aebe8344d7288fb23728965da9c',
+        language: 'es',
+        // Fish Audio prosody: conversational pace with modest variation.
+        modelOptions: { speed: 0.98, temperature: 0.75 },
       }),
 
       turnHandling: {
@@ -87,7 +90,10 @@ export default defineAgent({
 
     // Speak first: greet the user before they say anything
     session.generateReply({
-      instructions: 'Saluda brevemente en español mexicano. Preséntate como asistente virtual de un negocio y pregunta en qué puedes ayudar. No inventes el nombre del negocio.',
+      instructions:
+        process.env.DENTAL_DEMO_MODE === 'yes'
+          ? 'Saluda brevemente en español mexicano y di que eres la asistente virtual del Consultorio Dental de Prueba, una demostración sin citas reales. Pregunta en qué puedes ayudar.'
+          : 'Saluda brevemente en español mexicano con voz natural de recepcionista dental. Preséntate como asistente virtual de un consultorio dental y pregunta en qué puedes ayudar. No inventes el nombre del consultorio.',
     });
   },
 });

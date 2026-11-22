@@ -1,10 +1,7 @@
-import { defineConfig, configDefaults } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    exclude: [
-      ...configDefaults.exclude,
-      'src/agent.test.ts',
-    ],
+    // All tests run offline. The LiveKit dependency is mocked in agent.test.ts.
   },
 });

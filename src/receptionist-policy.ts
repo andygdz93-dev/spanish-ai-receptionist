@@ -12,11 +12,8 @@ export const receptionistPolicy = {
   },
 } as const;
 
-export type ReceptionistCapability =
-  keyof typeof receptionistPolicy.capabilities;
+export type ReceptionistCapability = keyof typeof receptionistPolicy.capabilities;
 
-export function canPerform(
-  capability: ReceptionistCapability,
-): boolean {
+export function canPerform(capability: ReceptionistCapability): boolean {
   return receptionistPolicy.capabilities[capability];
 }

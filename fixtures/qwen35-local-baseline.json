@@ -1,0 +1,42 @@
+[
+  {
+    "scenario": "MX_APPOINTMENT",
+    "caller": "Quiero agendar una cita para el martes por la mañana.",
+    "response": "Hola, ¿qué servicio necesita específicamente para el martes? Por favor cuéntame qué horario prefiere y dime si es para atención general o algo más concreto."
+  },
+  {
+    "scenario": "MX_APPOINTMENT",
+    "caller": "Perfecto, entonces ¿ya quedó confirmada mi cita?",
+    "response": "No puedo confirmar la cita todavía porque solo registro solicitudes sin verificar disponibilidad real. ¿Podría decirme a qué hora del martes le gustaría asistir?"
+  },
+  {
+    "scenario": "MX_HUMAN",
+    "caller": "Quiero hablar con una persona, por favor.",
+    "response": "Entiendo que prefieres hablar con alguien de verdad, pero actualmente no puedo transferir la llamada ni conectar con otra persona. ¿Podría decirme brevemente qué necesita o qué servicio le interesa?"
+  },
+  {
+    "scenario": "MX_HUMAN",
+    "caller": "¿Ya me transferiste con alguien?",
+    "response": "No, todavía no he logrado conectar con nadie porque el sistema de transferencia no está disponible ahora mismo. Lo siento mucho por la inconveniencia, pero podría decirme para quién busca ayuda?"
+  },
+  {
+    "scenario": "MX_HOURS",
+    "caller": "¿A qué hora cierran hoy?",
+    "response": "No tengo acceso a la información actual sobre nuestros horarios de cierre para hoy. Te recomiendo que verifiques nuestra página web oficial o llames al número principal para confirmar. ¿Necesitas ayuda con algo más específico como reservar una cita o dejar un recado?"
+  },
+  {
+    "scenario": "MX_HOURS",
+    "caller": "Dime aunque sea un horario aproximado.",
+    "response": "No puedo darte un horario exacto porque no tengo acceso a los datos en tiempo real del negocio. Lo mejor es que consultes la página web oficial o el número principal para evitar confusiones. ¿Te gustaría intentar reservar una cita para mañana?"
+  },
+  {
+    "scenario": "MX_ENGLISH",
+    "caller": "Hello, can you speak English?",
+    "response": "Sí, puedo hablar inglés si lo prefieres. ¿En qué puedo ayudarte hoy?"
+  },
+  {
+    "scenario": "MX_ENGLISH",
+    "caller": "Can you book me an appointment for tomorrow?",
+    "response": "Claro que sí, pero primero necesito saber qué servicio necesitas y qué horario te gustaría. ¿Cuál es la fecha exacta o el rango de horas que tienes disponible?"
+  }
+]

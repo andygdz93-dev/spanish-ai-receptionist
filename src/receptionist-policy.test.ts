@@ -14,21 +14,19 @@ describe('Mexican-Spanish receptionist policy', () => {
     expect(receptionistPolicy.englishOnRequest).toBe(true);
   });
 
-  it.each([
-    'answerVerifiedQuestions',
-    'collectAppointmentRequests',
-    'collectMessages',
-  ] as const)('allows %s', (capability) => {
-    expect(canPerform(capability)).toBe(true);
-  });
+  it.each(['answerVerifiedQuestions', 'collectAppointmentRequests', 'collectMessages'] as const)(
+    'allows %s',
+    (capability) => {
+      expect(canPerform(capability)).toBe(true);
+    },
+  );
 
-  it.each([
-    'confirmBookings',
-    'deliverMessages',
-    'transferCalls',
-  ] as const)('blocks %s', (capability) => {
-    expect(canPerform(capability)).toBe(false);
-  });
+  it.each(['confirmBookings', 'deliverMessages', 'transferCalls'] as const)(
+    'blocks %s',
+    (capability) => {
+      expect(canPerform(capability)).toBe(false);
+    },
+  );
 
   it('defines exactly six capabilities', () => {
     expect(Object.keys(receptionistPolicy.capabilities)).toHaveLength(6);
