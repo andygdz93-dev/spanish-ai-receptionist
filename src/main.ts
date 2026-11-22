@@ -87,7 +87,7 @@ export default defineAgent({
 
     // Speak first: greet the user before they say anything
     session.generateReply({
-      instructions: 'Enthusiastically greet the user and offer to help.',
+      instructions: 'Saluda brevemente en español mexicano. Preséntate como asistente virtual de un negocio y pregunta en qué puedes ayudar. No inventes el nombre del negocio.',
     });
   },
 });

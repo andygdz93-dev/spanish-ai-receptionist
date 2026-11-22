@@ -1,0 +1,38 @@
+name: Generate Lockfile
+
+on:
+  push:
+    branches: [feat/mexican-spanish-receptionist]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Generate lockfile
+        run: pnpm install --lockfile-only --ignore-scripts
+
+      - name: Upload lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-lockfile
+          path: pnpm-lock.yaml
+          if-no-files-found: error
