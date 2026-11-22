@@ -227,3 +227,6 @@ ehthumbs.db
 # Local LiveKit synthetic inference evaluation results (never commit)
 livekit-gemma-evaluation.local.json
 livekit-voice-smoke.local.json
+
+# Local LiveKit worker logs (never commit)
+worker.startup.*.log
