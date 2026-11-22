@@ -1,4 +1,6 @@
-import { Agent, dedent, inference } from '@livekit/agents';
+import { Agent, dedent, inference, tool } from '@livekit/agents';
+import { z } from 'zod';
+import { getOfficeDateContext } from './office-time.ts';
 
 // Build a custom voice AI assistant with the functional `Agent.create` API
 export function createAgent() {
@@ -25,6 +27,17 @@ export function createAgent() {
       - Recopila solicitudes de citas sin confirmar reservaciones.
       - Permite que el cliente deje un recado.
       - Reconoce solicitudes para hablar con una persona.
+
+      # Fecha y hora del consultorio
+      - Contexto de fecha y hora al inicio de esta sesión: ${getOfficeDateContext()} 
+      - La zona horaria oficial es America/Tijuana.
+      - Para toda solicitud relativa a fechas (hoy, mañana, pasado mañana,
+        lunes, próximo martes), consulta primero la herramienta getCurrentOfficeDateTime
+        para obtener la fecha real y actualizada.
+      - Calcula fechas relativas desde esa fecha local, nunca desde fechas memorizadas.
+      - Comprueba que el día de la semana coincida con la fecha calculada.
+      - Si hay ambigüedad, pregunta cuál fecha quiso decir el cliente.
+      - No presentes fechas pasadas como disponibilidad ni inventes resultados del calendario.
 
       # Citas
       - Pregunta qué servicio necesita y qué fecha u horario prefiere.
@@ -73,6 +86,15 @@ export function createAgent() {
     // options from the AgentSession. No provider API key is needed.
     // (Note: This is for OpenAI GPT-Live. For other models, see https://docs.livekit.io/agents/models/realtime/)
     // llm: new inference.DuplexModel({ model: 'openai/gpt-live-1', voice: 'marin' }),
+
+    tools: [
+      tool({
+        name: 'getCurrentOfficeDateTime',
+        description: 'Obtiene la fecha, día de la semana y hora actuales del consultorio en America/Tijuana. Úsala antes de interpretar fechas relativas.',
+        parameters: z.object({}),
+        execute: async () => getOfficeDateContext(),
+      }),
+    ],
 
     // To add tools, specify `tools` in the constructor.
     // Here's an example that adds a simple weather tool.
