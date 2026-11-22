@@ -90,7 +90,8 @@ export function createAgent() {
     tools: [
       tool({
         name: 'getCurrentOfficeDateTime',
-        description: 'Obtiene la fecha, día de la semana y hora actuales del consultorio en America/Tijuana. Úsala antes de interpretar fechas relativas.',
+        description:
+          'Obtiene la fecha, día de la semana y hora actuales del consultorio en America/Tijuana. Úsala antes de interpretar fechas relativas.',
         parameters: z.object({}),
         execute: async () => getOfficeDateContext(),
       }),
