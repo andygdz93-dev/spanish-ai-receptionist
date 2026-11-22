@@ -3,14 +3,18 @@
 ## Current sandbox (safe testing)
 
 The running development agent can use `DENTAL_DEMO_MODE=yes` in `.env.local`.
-This is a **fictional, in-memory calendar**, not a connected Google Calendar.
-It has no Google credentials, notifications, real clinic, or persistent events.
+This is a **fictional, local SQLite demo calendar**, not a connected Google Calendar.
+It has no Google credentials, notifications, or real clinic. Simulated time slots
+are persisted locally so separate LiveKit job processes agree on availability.
 The demo overrides real Google Calendar credentials even if they exist.
 It uses placeholder service durations (`limpieza`: 60, `consulta`: 30, `revisión`: 30)
 and fictional hours Monday–Friday 09:00–17:00 America/Tijuana.
 Patients must use *fictional details only*; the demo backend substitutes
 `Paciente Prueba / 0000000000` before simulated booking.
-Demo appointment IDs begin `DEMO-`. Restarting the worker clears all reservations.
+Demo appointment IDs begin `DEMO-`. Reservations persist in the local
+`.demo-appointments.sqlite` file across calls and worker restarts; delete that
+file only when intentionally resetting fictional demo appointments while the worker
+is stopped. The database stores time ranges and synthetic IDs, never patient details.
 When calling the agent, it should explicitly say this is a demonstration.
 
 To switch to a real authorized office later: first disable `DENTAL_DEMO_MODE`,

@@ -230,3 +230,4 @@ livekit-voice-smoke.local.json
 
 # Local LiveKit worker logs (never commit)
 worker.startup.*.log
+.demo-appointments.sqlite*
