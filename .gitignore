@@ -231,3 +231,6 @@ livekit-voice-smoke.local.json
 # Local LiveKit worker logs (never commit)
 worker.startup.*.log
 .demo-appointments.sqlite*
+
+# Google OAuth Desktop client JSON (private)
+google-oauth-client.json
