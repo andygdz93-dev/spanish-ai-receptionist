@@ -8,16 +8,20 @@ The dedicated VVS Smilez calendar is owned by `andygdz663@gmail.com` and uses
 The local `.env.local` already has the calendar ID and timezone. Demo mode remains
 enabled, and real Google Calendar bookings are **not** enabled.
 
-## 1. Create a Google Cloud OAuth client (account owner action)
+## 1. Create a Google Cloud OAuth client (653 account)
 
-Use the Google account `andygdz663@gmail.com` on the Windows computer.
+Use the Google account `andygdz653@gmail.com` to authorize the LiveKit application.
+The VVS Smilez calendar is still owned by `andygdz663@gmail.com`: before OAuth,
+share VVS Smilez with `andygdz653@gmail.com` using **Make changes to events**
+permissions and accept the invitation from the 653 account. Leave public access off.
 
-1. Visit https://console.cloud.google.com/ and choose or create a Google Cloud project
-   controlled by the calendar owner.
+1. Visit https://console.cloud.google.com/ using the 653 account and select the
+   Google Cloud project where you configured its consent screen. The Cloud
+   project owner and the calendar owner may be different accounts.
 2. Enable the **Google Calendar API** for the selected project.
 3. In **Google Auth platform**, configure the consent screen (Branding, Audience,
    Data access). For a personal Gmail account, use the **External** audience.
-   If the app is in Testing, add `andygdz663@gmail.com` as a test user.
+   If the app is in Testing, add `andygdz653@gmail.com` as a test user.
 4. Create a new OAuth 2.0 client with application type **Desktop app** under
    **Google Auth platform > Clients**.
 5. Download its client JSON file. On the Windows computer only, rename it
@@ -38,13 +42,16 @@ node .\scripts\connect-vvs-calendar.mjs
 ```
 
 A local browser will open Google's authorization page. Choose
-`andygdz663@gmail.com`, read the requested permissions, and approve if correct.
+`andygdz653@gmail.com`, read the requested permissions, and approve if correct.
 The local callback verifies the account and VVS Smilez free/busy access before
 saving OAuth parameters privately in `.env.local`.
 
-The helper uses Google Calendar event-edit scope for *calendars owned by this
-account*, a free/busy scope, and an email identity scope. It does not write an
-appointment or enable real booking.
+The helper requests event-edit permissions for calendars accessible to this
+account, a free/busy scope, and an email identity scope. This scope can also
+allow access to other calendars in the account: only approve if acceptable.
+The helper does not write an appointment or enable real booking.
+Free/busy success alone does not prove write permission; a synthetic-event test
+on VVS Smilez is required before enabling bookings.
 
 ## 3. Important gates before turning on real appointments
 

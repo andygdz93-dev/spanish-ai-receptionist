@@ -5,14 +5,14 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 
-const expectedAccount = 'andygdz663@gmail.com';
+const expectedAccount = 'andygdz653@gmail.com';
 const calendarId =
   '473e51b5329a173e885c3fe8db7cf83305bda22f5fa09a2441cdda034a823dc4@group.calendar.google.com';
 const clientPath = resolve('google-oauth-client.json');
 const envPath = resolve('.env.local');
 const redirect = 'http://127.0.0.1:8765';
 const scopes = [
-  'https://www.googleapis.com/auth/calendar.events.owned',
+  'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/calendar.events.freebusy',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
