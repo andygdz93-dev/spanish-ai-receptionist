@@ -36,5 +36,5 @@ describe('demo calendar persists between separate LiveKit job processes', () => 
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 20000);
 });

@@ -76,7 +76,7 @@ async function main() {
         server.close();
         rejectCode(new Error('Authorization timed out. Run the command again.'));
       },
-      5 * 60 * 1000,
+      60 * 60 * 1000,
     );
     timer.unref();
   });

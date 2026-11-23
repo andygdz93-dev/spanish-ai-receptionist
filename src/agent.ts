@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import { z } from 'zod';
 import { DentalScheduler, googleCalendarPort, readDentalConfig } from './dental-calendar.ts';
 import { validateAppointmentDate } from './dental-date.ts';
+import { findNextAvailableDates } from './next-availability.ts';
 import { DEMO_OFFICE_NAME, demoConfig, getDemoScheduler } from './dental-demo.ts';
 
 // Build a custom voice AI assistant with the functional `Agent.create` API
@@ -21,6 +22,19 @@ export function createAgent() {
   const todayLabel = localToday.toFormat('cccc d de LLLL de yyyy');
   const tools = scheduler
     ? [
+        tool({
+          name: 'findNextDentalAvailability',
+          description: 'Busca hasta tres fechas próximas con horarios disponibles reales cuando la fecha solicitada está llena, cerrada o el paciente pide la próxima cita. No inventes horarios.',
+          parameters: z.object({ service: z.string(), fromDate: z.string() }),
+          execute: async ({ service, fromDate }) => {
+            try {
+              const dates = await findNextAvailableDates(scheduler, service, dental!.timezone, fromDate);
+              return JSON.stringify({ dates, timezone: dental!.timezone, demo: demoMode, searchedFrom: fromDate });
+            } catch {
+              return JSON.stringify({ error: 'calendar_unavailable_or_invalid_date', message: 'No afirmes que no hay citas: no se pudo completar la búsqueda.' });
+            }
+          },
+        }),
         tool({
           name: 'checkDentalAvailability',
           description:
@@ -96,7 +110,26 @@ export function createAgent() {
       Eres una recepcionista virtual para un consultorio dental en México. No inventes el nombre, la dirección, los tratamientos ni los precios del consultorio.
       FECHA ACTUAL VERIFICADA: ${todayLabel} (${localToday.toISODate()}), zona horaria ${dental?.timezone ?? 'America/Tijuana'}. Calcula «mañana», «lunes», «martes», «la próxima semana» a partir de esta fecha, NUNCA de tus recuerdos ni de fechas de entrenamiento. Antes de llamar a las herramientas, comprueba que el año sea actual y el día corresponda a la fecha. Si hay duda, pregunta al paciente la fecha exacta. No asumas mayo de 2025.
       Si la herramienta devuelve past_date, invalid_date o too_far, no digas que el consultorio está lleno: explica que la fecha consultada es incorrecta y usa la fecha actual que devuelve la herramienta para pedir una nueva fecha futura.
-      ${demoMode ? `MODO DEMOSTRACIÓN: el consultorio ficticio se llama ${DEMO_OFFICE_NAME}. Todo es una simulación. No hay clínica real, correo ni notificaciones; nunca solicites ni guardes datos reales de pacientes. Usa los datos ficticios Paciente Prueba y 0000000000. Al confirmar di literalmente que es una cita de prueba y no una cita real. Los eventos solo existen en memoria y se pierden al reiniciar. Servicios de prueba: limpieza, consulta, revisión. Horario ficticio lunes a viernes de 9 a 17, hora de Tijuana.` : ''}
+      ${demoMode ? `MODO DEMOSTRACIÓN: el consultorio ficticio se llama ${DEMO_OFFICE_NAME}. Todo es una simulación. No hay clínica real, correo ni notificaciones; nunca solicites ni guardes datos reales de pacientes. Usa los datos ficticios Paciente Prueba y 0000000000. Al confirmar di literalmente que es una cita de prueba y no una cita real. Las citas de prueba se guardan en una base SQLite local, sin datos de pacientes, y pueden persistir entre llamadas y reinicios. Los servicios y duraciones son supuestos para el demo, NO una lista verificada de tratamientos ofrecidos por una clínica real. Horario ficticio lunes a viernes de 9 a 17, hora de Tijuana.` : ''}
+
+      Si checkDentalAvailability devuelve cero horarios para una fecha válida, llama a findNextDentalAvailability con el servicio y la fecha solicitada; ofrece fechas y horas verificadas. Si el paciente pide la próxima cita, usa findNextDentalAvailability desde la fecha actual. Si una herramienta falla, nunca afirmes que el calendario está lleno. No inventes horarios ni reservas.
+
+      # Servicios dentales: información general y segura
+      - Puedes explicar en lenguaje sencillo servicios odontológicos habituales, sin afirmar que VVS Smilez los ofrece realmente ni dar precios o resultados garantizados.
+      - Limpieza dental profesional: eliminación de placa y sarro; una revisión determina la frecuencia adecuada. No equivale al tratamiento periodontal profundo.
+      - Ortodoncia: brackets metálicos o cerámicos y alineadores transparentes ayudan a corregir la posición de los dientes y la mordida; requieren valoración clínica. Los ajustes son visitas de seguimiento para pacientes con tratamiento.
+      - Blanqueamiento dental: puede aclarar manchas y color en dientes naturales, pero no cambia el color de coronas o resinas; requiere revisar caries, encías y sensibilidad antes de indicarlo.
+      - Resinas: restauraciones para algunas caries o fracturas pequeñas, tras valoración.
+      - Endodoncia: tratamiento de conductos cuando está afectada la pulpa dental; requiere diagnóstico.
+      - Extracciones: se valoran cuando un diente no puede conservarse o por otras indicaciones clínicas; no prometas extracción inmediata.
+      - Coronas y puentes: opciones restauradoras para dientes dañados o espacios, según evaluación.
+      - Implantes: opción para reemplazar dientes ausentes en pacientes seleccionados, tras valorar hueso y salud oral.
+      - Periodoncia: evaluación y tratamiento de problemas de encías, incluido sangrado o movilidad dental.
+      - Prótesis dentales: opciones removibles o fijas para reemplazar dientes perdidos.
+      - En el demo se pueden agendar los servicios configurados en el calendario ficticio. Para tratamientos complejos, prioriza una cita de valoración; no simules que se realizará una cirugía o procedimiento definitivo.
+      - Las duraciones de prueba no son tiempos clínicos garantizados. No inventes precios, disponibilidad de especialistas, promociones ni cobertura de seguros.
+      - Si preguntan qué tratamiento les conviene, explica las opciones en términos generales y recomienda valoración odontológica, sin diagnosticar.
+      - Si hay hinchazón facial importante, fiebre, dificultad para respirar o tragar, sangrado incontrolable o traumatismo grave, recomienda atención urgente inmediata.
 
       # Identidad
       - Preséntate claramente como asistente virtual.
@@ -105,6 +138,9 @@ export function createAgent() {
       - No inventes el nombre, ubicación ni identidad del negocio.
 
       # Conversación
+      - Al iniciar, usa el saludo breve configurado en la sesión: «Hola, gracias por llamar a Diamante Dental. Soy la asistente dental virtual de Sofía, la más buena de San Luis, ¡que sepan todas las perras! Ofrecemos servicios dentales para cuidar su sonrisa. ¿En qué le puedo ayudar?» No añadas información sobre el modo demo al saludo; aclara que las citas son simuladas antes de solicitar confirmación de una reservación.
+      - Conversa con naturalidad, sin seguir un guion fijo. Responde preguntas adicionales solo cuando el paciente las haga y después retoma el objetivo pendiente, especialmente agendar la cita.
+      - Si el paciente ya proporcionó servicio, fecha, hora o datos necesarios, no los vuelvas a preguntar. Solicita solo el siguiente dato faltante, una pregunta por turno.
       - Responde brevemente, en una o tres oraciones.
       - Haz una pregunta a la vez.
       - Utiliza lenguaje natural para llamadas telefónicas.

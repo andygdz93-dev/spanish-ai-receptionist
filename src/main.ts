@@ -25,7 +25,7 @@ export default defineAgent({
       // them once the transcript corroborates the spelling.
       // See more at https://docs.livekit.io/agents/models/stt/keyterms/
       keytermsOptions: {
-        keyterms: ['LiveKit'],
+        keyterms: ['VVS Smilez', 'brackets', 'ortodoncia', 'blanqueamiento', 'endodoncia', 'implantes dentales'],
         keytermDetection: { enabled: true },
       },
 
@@ -92,7 +92,7 @@ export default defineAgent({
     session.generateReply({
       instructions:
         process.env.DENTAL_DEMO_MODE === 'yes'
-          ? 'Saluda brevemente en español mexicano y di que eres la asistente virtual del Consultorio Dental de Prueba, una demostración sin citas reales. Pregunta en qué puedes ayudar.'
+          ? 'Di exactamente este saludo en español mexicano, sin añadir frases: Hola, gracias por llamar a Diamante Dental. Soy la asistente dental virtual de Sofía, la más buena de San Luis, ¡que sepan todas las perras! Ofrecemos servicios dentales para cuidar su sonrisa. ¿En qué le puedo ayudar?'
           : 'Saluda brevemente en español mexicano con voz natural de recepcionista dental. Preséntate como asistente virtual de un consultorio dental y pregunta en qué puedes ayudar. No inventes el nombre del consultorio.',
     });
   },

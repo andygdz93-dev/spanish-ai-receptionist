@@ -33,12 +33,28 @@ function getDatabase(): DatabaseSync {
 }
 
 const timezone = 'America/Tijuana';
-export const DEMO_OFFICE_NAME = 'Consultorio Dental de Prueba';
+export const DEMO_OFFICE_NAME = 'VVS Smilez';
 export const demoConfig: DentalConfig = {
   calendarId: 'demo-only-memory',
   officeEmail: 'no-email-sent.invalid',
   timezone,
-  services: { limpieza: 60, consulta: 30, revisión: 30 },
+  services: {
+    limpieza: 60,
+    consulta: 30,
+    revisión: 30,
+    'valoración de ortodoncia': 45,
+    'ajuste de brackets': 30,
+    'valoración de blanqueamiento': 30,
+    'blanqueamiento dental': 90,
+    'resina dental': 60,
+    'valoración de endodoncia': 45,
+    'valoración de extracción': 45,
+    'valoración de implante': 45,
+    'valoración de encías': 45,
+    'valoración de corona': 45,
+    'valoración de alineadores': 45,
+    'valoración de prótesis': 45,
+  },
   hours: {
     '1': [['09:00', '17:00']],
     '2': [['09:00', '17:00']],

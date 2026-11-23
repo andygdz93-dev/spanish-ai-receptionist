@@ -7,6 +7,8 @@ export type DentalConfig = {
   timezone: string;
   services: Record<string, number>;
   hours: Record<string, [string, string][]>;
+  /** Optional clinic-admin closure windows, ISO instants; absent means not configured. */
+  closures?: Array<{ start: string; end: string }>;
   clientId: string;
   clientSecret: string;
   refreshToken: string;
@@ -152,11 +154,17 @@ export class DentalScheduler {
   }
 
   async availableSlots(service: string, date: string): Promise<string[]> {
-    const minutes = this.config.services[service.toLowerCase().trim()];
-    if (!minutes || !datePattern.test(date)) return [];
+    const requestedService = service.toLowerCase().trim();
+    const canonicalService = requestedService === 'limpieza dental' && this.config.services['limpieza'] ? 'limpieza' : requestedService;
+    const minutes = this.config.services[canonicalService];
+    if (typeof minutes !== 'number' || !Number.isInteger(minutes) || minutes < 5 || minutes > 480 || !datePattern.test(date)) return [];
     const midnight = parseLocal(date, '00:00', this.config.timezone);
     if (!midnight) return [];
+    const today = this.now().setZone(this.config.timezone).startOf('day');
+    const daysAhead = Math.round(midnight.diff(today, 'days').days);
+    if (daysAhead < 0 || daysAhead > 30) return [];
     const windows = this.config.hours[String(midnight.weekday % 7)] ?? [];
+    if (windows.some(([open, close]) => !timePattern.test(open) || !timePattern.test(close) || open >= close)) return [];
     if (!windows.length) return [];
     const intervals = windows.map(([start, end]) => ({
       start: parseLocal(date, start, this.config.timezone),
@@ -166,10 +174,13 @@ export class DentalScheduler {
     const startDay = midnight.toUTC().toISO()!;
     const endDay = midnight.plus({ days: 1 }).toUTC().toISO()!;
     const busy = await this.api.freeBusy(startDay, endDay, this.config.calendarId);
-    const occupied = busy.map((item) => ({
+    const closureIntervals = (this.config.closures ?? []).map((item) => ({
+      start: DateTime.fromISO(item.start), end: DateTime.fromISO(item.end),
+    }));
+    const occupied = [...busy.map((item) => ({
       start: DateTime.fromISO(item.start),
       end: DateTime.fromISO(item.end),
-    }));
+    })), ...closureIntervals];
     if (
       occupied.some((item) => !item.start.isValid || !item.end.isValid || item.end <= item.start)
     ) {
@@ -179,12 +190,13 @@ export class DentalScheduler {
       const slots: string[] = [];
       for (
         let cursor = start!;
-        cursor.plus({ minutes }) <= end!;
-        cursor = cursor.plus({ minutes: 30 })
+        cursor.plus({ minutes: minutes + 15 }) <= end!;
+        cursor = cursor.plus({ hours: 1 })
       ) {
         const finish = cursor.plus({ minutes });
-        if (cursor <= this.now().setZone(this.config.timezone).plus({ hours: 1 })) continue;
-        if (occupied.some((item) => item.start < finish && item.end > cursor)) continue;
+        if (cursor.minute !== 0 || cursor.second !== 0) continue;
+        if (cursor < this.now().setZone(this.config.timezone).plus({ minutes: 60 })) continue;
+        if (occupied.some((item) => item.start < finish.plus({ minutes: 15 }) && item.end > cursor)) continue;
         slots.push(cursor.toFormat('HH:mm'));
       }
       return slots;
@@ -207,7 +219,8 @@ export class DentalScheduler {
       input.phone.length > 40
     )
       return { status: 'invalid' };
-    const service = input.service.toLowerCase().trim();
+    const requestedService = input.service.toLowerCase().trim();
+    const service = requestedService === 'limpieza dental' && this.config.services['limpieza'] ? 'limpieza' : requestedService;
     const start = parseLocal(input.date, input.time, this.config.timezone);
     const minutes = this.config.services[service];
     if (!start || !minutes) return { status: 'invalid' };
@@ -226,7 +239,7 @@ export class DentalScheduler {
         officeEmail: this.config.officeEmail,
         timezone: this.config.timezone,
         start: start.toISO()!,
-        end: start.plus({ minutes }).toISO()!,
+        end: start.plus({ minutes: minutes + 15 }).toISO()!,
         service,
         patientName: input.patientName.trim(),
         phone: input.phone.trim(),

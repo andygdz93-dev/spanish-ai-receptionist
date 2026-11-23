@@ -39,7 +39,7 @@ describe('dental calendar adapter - no network calls', () => {
       'limpieza',
       '2026-11-23',
     );
-    expect(slots).toEqual(['09:00', '11:00']);
+    expect(slots).toEqual([]); // 09:00 buffer overlaps 10:00 busy; 11:00 buffer exceeds closing.
     expect(m.freeBusy).toHaveBeenCalledOnce();
   });
   it('rejects unverified or malformed reservations without writing', async () => {
