@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAgent } from './agent.ts';
+import { RECEPTIONIST_GREETING } from './greeting.ts';
 
 const { createMock, llmMock } = vi.hoisted(() => ({
   createMock: vi.fn((config: unknown) => config),
@@ -44,6 +45,14 @@ describe('offline agent configuration contract (not live conversation output)', 
     expect(text).toContain('M\u00e9xico');
     expect(text).toContain('espa\u00f1ol mexicano');
     expect(text).toContain('asistente virtual');
+  });
+
+  it('has the exact opening line shared with the direct TTS greeting and never retains the old greeting', () => {
+    const instructions = prompt();
+    expect(RECEPTIONIST_GREETING).toBe('Hola, gracias por llamar a VVZ Smiles. Soy una asistente virtual de VVZ Smilez. ¿En qué le podemos ayudar?');
+    expect(instructions).toContain(RECEPTIONIST_GREETING);
+    expect(instructions).not.toContain('Diamante Dental');
+    expect(instructions).not.toContain('la más buena de San Luis');
   });
 
   it('switches to English only when the caller requests it', () => {

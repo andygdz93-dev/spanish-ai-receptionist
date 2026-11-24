@@ -147,3 +147,17 @@ To deploy the agent to LiveKit Cloud, see the [deployment guide](https://docs.li
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## 2026-11-23 — Opt-in LiveKit job lifecycle + durable HQ event delivery
+
+See `PHASE2-LIVEKIT-PRODUCER.md` for the event contract, operational flags, persistent SQLite outbox/retrier, privacy restrictions, and safe rollout sequence. The currently running agent server was **not restarted**; real telemetry emission is disabled. No calls or calendar writes were made.
+
+Verification: voice `vitest run --fileParallelism=false`: **92/92 passed**; voice TypeScript, focused ESLint and Git diff checks passed. A first fully parallel test run had 3 pre-existing inference-safety subprocess tests time out due to contention; they all passed both in isolation and in the sequential full suite, with spending flags explicitly disabled. HQ **39/39 passed**; its TypeScript check passed. The disposable cross-project contract smoke test passed (mocked LiveKit context -> durable offline queue -> retrier -> signed HQ receiver -> authenticated call history). Native local LiveKit health was **HTTP 200** on port 8081 (PID 12052) without a paid voice call. HQ's production localhost admin port 8787 was not listening; no persistent HQ local database or default voice outbox was created.
+
+## 2026-11-23 — Phase 3A local staging readiness
+
+Phase 3A implementation and rollback notes: `PHASE3A-ENGINEERING.md`. The opt-in signed LiveKit reporter can submit native loopback probe results and **actual SQLite outbox counts**, and the producer requires event-ID-matching JSON acknowledgement before marking delivery. Staging profile validation and a manually invoked Node supervisor were added; no Windows autostart, paid call, booking, or live worker restart was performed. Git source-of-truth mismatch remains unresolved; do not push this branch to the current public origin.
+
+## Phase 3B staging hardening
+
+See `PHASE3B-ENGINEERING.md` for the tested fail-closed staging HQ identity policy, native worker PID/health port isolation, recovery gates and exact verification evidence. Live worker remains unchanged; no real staging/calls/Google bookings enabled.

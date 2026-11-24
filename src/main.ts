@@ -3,11 +3,17 @@ import { EnhancerModel, audioEnhancement } from '@livekit/plugins-ai-coustics';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { createAgent } from './agent.ts';
+import { attachOperationalLifecycle } from './operational-lifecycle.ts';
+import { validateStagingProfile } from './staging-profile.ts';
+import { readStagingWorkerServerConfig } from './staging-health-target.ts';
+import { RECEPTIONIST_GREETING } from './greeting.ts';
 
 // Load environment variables from a local file.
 // Make sure to set LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET
 // when running locally or self-hosting your agent server.
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: process.env.VVS_RUNTIME_PROFILE === 'staging' ? '.env.staging.local' : '.env.local' });
+validateStagingProfile(process.env);
+const stagingWorkerListener = readStagingWorkerServerConfig(process.env);
 
 export default defineAgent({
   entry: async (ctx) => {
@@ -88,13 +94,22 @@ export default defineAgent({
     // Join the room and connect to the user
     await ctx.connect();
 
-    // Speak first: greet the user before they say anything
-    session.generateReply({
-      instructions:
-        process.env.DENTAL_DEMO_MODE === 'yes'
-          ? 'Di exactamente este saludo en español mexicano, sin añadir frases: Hola, gracias por llamar a Diamante Dental. Soy la asistente dental virtual de Sofía, la más buena de San Luis, ¡que sepan todas las perras! Ofrecemos servicios dentales para cuidar su sonrisa. ¿En qué le puedo ayudar?'
-          : 'Saluda brevemente en español mexicano con voz natural de recepcionista dental. Preséntate como asistente virtual de un consultorio dental y pregunta en qué puedes ayudar. No inventes el nombre del consultorio.',
-    });
+    // Opt-in, best-effort operational receipts; persisted locally before delivery.
+    // Never prevent a working voice session because observability is unavailable.
+    let telemetry: ReturnType<typeof attachOperationalLifecycle> = null;
+    try { telemetry = attachOperationalLifecycle(ctx); }
+    catch { console.warn('Operational telemetry unavailable; voice session continues'); }
+    // Non-recoverable provider failures are operational failures, not patient detail.
+    // Recoverable model errors do not mark a running session failed.
+    if (telemetry) {
+      session.on(voice.AgentSessionEventTypes.Error, (event) => {
+        if (!event.error.recoverable) telemetry?.fail();
+      });
+    }
+
+    // Speak the precise opening line via TTS instead of asking the LLM to paraphrase it.
+    try { session.say(RECEPTIONIST_GREETING); }
+    catch (error) { telemetry?.fail(); throw error; }
   },
 });
 
@@ -103,5 +118,6 @@ cli.runApp(
   new ServerOptions({
     agent: fileURLToPath(import.meta.url),
     agentName: 'my-agent',
+    ...(stagingWorkerListener ?? {}),
   }),
 );

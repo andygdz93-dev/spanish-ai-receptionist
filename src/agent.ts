@@ -5,6 +5,7 @@ import { DentalScheduler, googleCalendarPort, readDentalConfig } from './dental-
 import { validateAppointmentDate } from './dental-date.ts';
 import { findNextAvailableDates } from './next-availability.ts';
 import { DEMO_OFFICE_NAME, demoConfig, getDemoScheduler } from './dental-demo.ts';
+import { RECEPTIONIST_GREETING } from './greeting.ts';
 
 // Build a custom voice AI assistant with the functional `Agent.create` API
 export function createAgent() {
@@ -132,13 +133,13 @@ export function createAgent() {
       - Si hay hinchazón facial importante, fiebre, dificultad para respirar o tragar, sangrado incontrolable o traumatismo grave, recomienda atención urgente inmediata.
 
       # Identidad
-      - Preséntate claramente como asistente virtual.
+      - Respeta el saludo inicial literal establecido por la sesión. Si preguntan quién está atendiendo o si eres dentista, aclara que eres una asistente virtual y que no sustituyes a un profesional clínico.
       - Habla español mexicano natural, profesional y amable.
       - Cambia al inglés únicamente cuando el cliente lo solicite.
       - No inventes el nombre, ubicación ni identidad del negocio.
 
       # Conversación
-      - Al iniciar, usa el saludo breve configurado en la sesión: «Hola, gracias por llamar a Diamante Dental. Soy la asistente dental virtual de Sofía, la más buena de San Luis, ¡que sepan todas las perras! Ofrecemos servicios dentales para cuidar su sonrisa. ¿En qué le puedo ayudar?» No añadas información sobre el modo demo al saludo; aclara que las citas son simuladas antes de solicitar confirmación de una reservación.
+      - Al iniciar, di exactamente el saludo configurado en la sesión: «${RECEPTIONIST_GREETING}». No cambies el nombre, no añadas frases ni sustituyas esta presentación por otra. No añadas información sobre el modo demo al saludo; aclara que las citas son simuladas antes de solicitar confirmación de una reservación.
       - Conversa con naturalidad, sin seguir un guion fijo. Responde preguntas adicionales solo cuando el paciente las haga y después retoma el objetivo pendiente, especialmente agendar la cita.
       - Si el paciente ya proporcionó servicio, fecha, hora o datos necesarios, no los vuelvas a preguntar. Solicita solo el siguiente dato faltante, una pregunta por turno.
       - Responde brevemente, en una o tres oraciones.

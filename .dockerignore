@@ -64,3 +64,16 @@ GEMINI.md
 .github/copilot-instructions.md
 .github/personal-instructions.md
 .github/instructions/
+# Never package local staging configuration or runtime state
+.env.staging.local
+
+# Durable operational telemetry state stays on the host only
+.telemetry-outbox.sqlite*
+
+# Private OAuth clients and persistent demo booking data
+/google-oauth-client.json
+/client_secret_*.json
+/.demo-appointments.sqlite*
+*.pem
+*.p12
+*.key

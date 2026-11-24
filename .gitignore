@@ -234,3 +234,22 @@ worker.startup.*.log
 
 # Google OAuth Desktop client JSON (private)
 google-oauth-client.json
+
+# Explicit staging environment file (always private)
+.env.staging.local
+# One-call Google pilot credentials; never commit or share
+.env.google-pilot.local
+# Original-project phone bridge test runtime settings; never commit
+.env.google-phone-test.local
+# Repeatable browser-only Calendar staging settings; never commit
+.env.google-staging.local
+
+# Durable local operational event outbox. Never commit customer metadata or runtime state.
+.telemetry-outbox.sqlite*
+
+# Private runtime diagnostics and downloaded OAuth credentials
+*.log
+client_secret_*.json
+*.pem
+*.p12
+*.key
