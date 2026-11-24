@@ -1,11 +1,8 @@
-import { inference, initializeLogger, llm } from '@livekit/agents';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { evaluate, scenarios } from './conversation-eval.mjs';
-
-initializeLogger({ pretty: false, level: 'error' });
 
 const MODEL = 'google/gemma-4-31b-it';
 const MAX_USD = 1.0;
@@ -54,6 +51,9 @@ async function run() {
   if (!found || !source.includes(`model: '${MODEL}'`)) {
     throw new Error('Model or instructions differ from expected production configuration');
   }
+  // Preflight and blocked runs must exit without loading native SDK resources.
+  const { inference, initializeLogger, llm } = await import('@livekit/agents');
+  initializeLogger({ pretty: false, level: 'error' });
   const instructions = found[1].replace(/^ {6}/gm, '').trim();
   const model = new inference.LLM({
     model: MODEL,

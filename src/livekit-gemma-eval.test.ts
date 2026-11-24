@@ -9,6 +9,7 @@ const baseEnv = {
   LIVEKIT_API_KEY: '',
   LIVEKIT_API_SECRET: '',
   LIVEKIT_TEST_CAP_VERIFIED: '',
+  LIVEKIT_TEST_SOFT_BUDGET_ACKNOWLEDGED: '',
 };
 
 function run(args: string[], env = baseEnv) {

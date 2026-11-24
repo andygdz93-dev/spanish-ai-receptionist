@@ -3,17 +3,30 @@ import { EnhancerModel, audioEnhancement } from '@livekit/plugins-ai-coustics';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { createAgent } from './agent.ts';
-import { attachOperationalLifecycle } from './operational-lifecycle.ts';
-import { validateStagingProfile } from './staging-profile.ts';
-import { readStagingWorkerServerConfig } from './staging-health-target.ts';
 import { RECEPTIONIST_GREETING } from './greeting.ts';
+import { attachOperationalLifecycle } from './operational-lifecycle.ts';
+import { readStagingWorkerServerConfig } from './staging-health-target.ts';
+import { validateStagingProfile } from './staging-profile.ts';
+import { startProductionWorkerHeartbeats } from './worker-heartbeat.ts';
 
 // Load environment variables from a local file.
 // Make sure to set LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET
 // when running locally or self-hosting your agent server.
-dotenv.config({ path: process.env.VVS_RUNTIME_PROFILE === 'staging' ? '.env.staging.local' : '.env.local' });
+dotenv.config({
+  path: process.env.VVS_RUNTIME_PROFILE === 'staging' ? '.env.staging.local' : '.env.local',
+});
 validateStagingProfile(process.env);
 const stagingWorkerListener = readStagingWorkerServerConfig(process.env);
+// The production SDK health route becomes HTTP 200 only after worker registration.
+// Heartbeats are opt-in through the same HQ telemetry configuration as call events.
+if (process.argv[2] === 'start' && !stagingWorkerListener) {
+  try {
+    startProductionWorkerHeartbeats();
+  } catch {
+    // Observability configuration must never prevent the receptionist from starting.
+    console.warn('Worker heartbeat unavailable; receptionist startup continues');
+  }
+}
 
 export default defineAgent({
   entry: async (ctx) => {
@@ -31,7 +44,14 @@ export default defineAgent({
       // them once the transcript corroborates the spelling.
       // See more at https://docs.livekit.io/agents/models/stt/keyterms/
       keytermsOptions: {
-        keyterms: ['VVS Smilez', 'brackets', 'ortodoncia', 'blanqueamiento', 'endodoncia', 'implantes dentales'],
+        keyterms: [
+          'VVS Smilez',
+          'brackets',
+          'ortodoncia',
+          'blanqueamiento',
+          'endodoncia',
+          'implantes dentales',
+        ],
         keytermDetection: { enabled: true },
       },
 
@@ -97,8 +117,11 @@ export default defineAgent({
     // Opt-in, best-effort operational receipts; persisted locally before delivery.
     // Never prevent a working voice session because observability is unavailable.
     let telemetry: ReturnType<typeof attachOperationalLifecycle> = null;
-    try { telemetry = attachOperationalLifecycle(ctx); }
-    catch { console.warn('Operational telemetry unavailable; voice session continues'); }
+    try {
+      telemetry = attachOperationalLifecycle(ctx);
+    } catch {
+      console.warn('Operational telemetry unavailable; voice session continues');
+    }
     // Non-recoverable provider failures are operational failures, not patient detail.
     // Recoverable model errors do not mark a running session failed.
     if (telemetry) {
@@ -108,8 +131,12 @@ export default defineAgent({
     }
 
     // Speak the precise opening line via TTS instead of asking the LLM to paraphrase it.
-    try { session.say(RECEPTIONIST_GREETING); }
-    catch (error) { telemetry?.fail(); throw error; }
+    try {
+      session.say(RECEPTIONIST_GREETING);
+    } catch (error) {
+      telemetry?.fail();
+      throw error;
+    }
   },
 });
 
