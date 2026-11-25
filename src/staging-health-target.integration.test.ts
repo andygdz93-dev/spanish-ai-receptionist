@@ -55,6 +55,7 @@ describe.skipIf(process.platform !== 'win32')(
         });
         expect(await inspectWindowsListener(port)).toBe(expectedPid);
         expect(await ownsWorkerHealthPort(port)).toBe(false);
+        expect(await ownsWorkerHealthPort(port, expectedPid)).toBe(true);
         const cfg = {
           businessId: randomUUID(),
           workerId: 'os-local-test',

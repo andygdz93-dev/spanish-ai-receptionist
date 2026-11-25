@@ -29,8 +29,12 @@ type HeartbeatOptions = {
 };
 
 /** Attribute native health to this process, including before its server starts. */
-export async function ownsWorkerHealthPort(port: number): Promise<boolean> {
+export async function ownsWorkerHealthPort(
+  port: number,
+  expectedPid = process.pid,
+): Promise<boolean> {
   if (!Number.isInteger(port) || port < 1 || port > 65535) return false;
+  if (!Number.isSafeInteger(expectedPid) || expectedPid <= 0) return false;
   try {
     if (process.platform === 'win32') {
       const { stdout } = await execFileAsync('netstat.exe', ['-ano', '-p', 'tcp'], {
@@ -39,11 +43,23 @@ export async function ownsWorkerHealthPort(port: number): Promise<boolean> {
         timeout: 3000,
         maxBuffer: 2 * 1024 * 1024,
       });
-      return ['127.0.0.1', '0.0.0.0'].some(
-        (host) => parseWindowsListener(stdout, port, host) === process.pid,
+      const rows = stdout.split(/\r?\n/).filter((line) => {
+        const fields = line.trim().split(/\s+/);
+        return (
+          fields[0] === 'TCP' &&
+          fields[3] === 'LISTENING' &&
+          [`127.0.0.1:${port}`, `0.0.0.0:${port}`].includes(fields[1] ?? '')
+        );
+      });
+      return (
+        rows.length === 1 &&
+        ['127.0.0.1', '0.0.0.0'].some(
+          (host) => parseWindowsListener(rows[0]!, port, host) === expectedPid,
+        )
       );
     }
     if (process.platform === 'linux') {
+      if (expectedPid !== process.pid) return false;
       const rows = (await readFile('/proc/net/tcp', 'utf8')).trim().split('\n').slice(1);
       const sockets = new Set(
         rows.flatMap((row) => {

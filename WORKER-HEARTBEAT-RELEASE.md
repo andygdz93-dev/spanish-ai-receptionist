@@ -18,7 +18,7 @@
 
 ## Verification
 
-- Full worker suite: **27 files, 164/164 tests passed**, default command `node node_modules/vitest/vitest.mjs --run`, 59.88 seconds on the configured Windows host.
+- Full worker suite after the existing-process observer addition: **28 files, 166/166 tests passed**, default command `node node_modules/vitest/vitest.mjs --run`, 32.31 seconds on the configured Windows host.
 - TypeScript `--noEmit` and ESLint on changed source/test files passed. Changed files are checked with the repository's Prettier configuration.
 - Scheduler tests cover 30-second cadence, no overlapping sends, stop/abort, and shutdown-listener cleanup. Other tests cover signed minimal payloads, exact receiver receipts, unavailable/unhealthy probes, missing/changing ownership, and actual OS ownership of disposable localhost listeners. Staging integration also proves a child process's listener is not attributed to the parent.
 - Configured outbox: `%LOCALAPPDATA%\VVS-Smilez-HQ\telemetry-outbox.sqlite`, outside the checkout. Existing file is WAL mode and read-only SQLite `quick_check` returns `ok`. A disposable sibling WAL database was successfully written, closed, and reopened; the diagnostic scratch directory was removed. No live queue contents were modified by that check.
@@ -48,3 +48,17 @@ Rollback uses the previous committed worker source and the same persistent outbo
 - `WORKER-HEARTBEAT-RELEASE.md`
 
 Unrelated existing `scripts/__pycache__/` files are excluded from this release.
+
+## Monitoring an already-running Windows worker
+
+`src/worker-heartbeat-observer.ts` can observe a worker without starting or registering one. Its arguments require the verified worker PID and Windows process creation time in Unix milliseconds. Before and after each native HTTP health probe, it checks both OS listener ownership and that exact process birth time. PID reuse, a different listener, worker exit, failed probes, or missing OS evidence suppress healthy events.
+
+Example command shape (replace both identity placeholders with freshly inspected values):
+
+```text
+node src/worker-heartbeat-observer.ts --pid VERIFIED_PID --started-at-ms VERIFIED_PROCESS_CREATION_MS
+```
+
+The observer uses the same `HQ_TELEMETRY_*` configuration, fresh HMAC signatures, receipt validation, minimal payload, and 30-second loop as the in-process reporter. It does not import the LiveKit SDK, register a worker, join rooms, or access Calendar. Do not run it alongside an updated worker's own heartbeat loop; stop the observer during the eventual controlled worker restart. A restarted worker requires a freshly verified observer identity if the observer is still needed.
+
+Additional files: `src/worker-heartbeat-observer.ts` and `src/worker-heartbeat-observer.test.ts`. The existing-process ownership test also verifies that an explicitly identified child listener can be recognized while default self-ownership rejects that child.
